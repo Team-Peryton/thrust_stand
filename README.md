@@ -1,2 +1,3 @@
 # thrust_stand
-some bits for propulsion testing 
+
+Using an arduino to read data from a NAU7802. The data is piped to a python program over COM.  
