@@ -1,34 +1,38 @@
 import time
 
 import serial
+from serial.tools import list_ports
 
+print(list(list_ports.comports()[0]))
 
 record_time = time.strftime('%Y%m%d-%H%M%S')
 f = open(f"logs/log_{record_time}.log", "w+")
 
-s = serial.Serial(input("COM PORT:"), 9600)
+s = serial.Serial(f"COM{input('COM PORT:')}", 57600)
 
 store = []
 
-try:
-    while True:
+
+while True:
+    try:
         newline = s.readline().decode("utf-8")
         print(newline)
-        if newline == "":
-            raise
         store.append(newline)
-except:
-    print("Connection closed")
-    s.close()
-    f.writelines(store)
-    f.close()
+    except UnicodeDecodeError:
+        pass
+    except KeyboardInterrupt:
+        print("Connection closed")
+        s.close()
+        f.writelines(store)
+        f.close()
+        break
 
 
-log = store[3:]
+log = store[:]
 newstore = []
 for line in log:
     try:
-        filtered = line
+        filtered = line.replace("\n", "").split(",")
         newstore.append(filtered)
     except:
         print("failed to parse a line")

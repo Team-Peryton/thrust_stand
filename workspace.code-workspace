@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "thrust_stand_arduino",
+			"path": "./thrust_stand_arduino"
+		}
+	],
+	"settings": {}
+}
