@@ -31,16 +31,18 @@ uint8_t telem_getCRC(uint8_t message[], uint32_t length)
     return crc;
 }
 
-void setup(){
+void setup_esc(){
     telem_buildCRCTable();
-    Serial.begin(115200);
-    Serial1.begin(115200, SERIAL_8N1);
+    Serial2.begin(115200, SERIAL_8N1);
+    Serial.println("Hello!");
 }
 
-void loop(){
-    while (Serial1.available() > 0)
+void loop_esc(){
+    Serial.println("loop");
+    Serial.println(Serial2.available());
+    while (Serial2.available() > 0)
     {
-        TelemBuffer[(l_byteIndex & 31)] = Serial1.read();
+        TelemBuffer[(l_byteIndex & 31)] = Serial2.read();
         l_byteIndex++;
     }
     if (l_byteIndex >= 10)
