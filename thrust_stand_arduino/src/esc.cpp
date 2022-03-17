@@ -31,15 +31,13 @@ uint8_t telem_getCRC(uint8_t message[], uint32_t length)
     return crc;
 }
 
-void setup_esc(){
+void esc_setup(){
     telem_buildCRCTable();
     Serial2.begin(115200, SERIAL_8N1);
     Serial.println("Hello!");
 }
 
-void loop_esc(){
-    Serial.println("loop");
-    Serial.println(Serial2.available());
+void esc_loop(){
     while (Serial2.available() > 0)
     {
         TelemBuffer[(l_byteIndex & 31)] = Serial2.read();
@@ -50,14 +48,12 @@ void loop_esc(){
         if (TelemBuffer[l_byteIndex - 1] == telem_getCRC(&(TelemBuffer[l_byteIndex - 10]), 9))
         {
             tmp_m = micros();
-            Serial.printf("LEFT Consump=%d mAh\n", (TelemBuffer[l_byteIndex-5]<<8 | TelemBuffer[l_byteIndex-4]));
-            Serial.printf("LEFT eRPM=%d\n", 100*(TelemBuffer[l_byteIndex-3]<<8 | TelemBuffer[l_byteIndex-2]));
-            Serial.printf("LEFT RPM=%d\n", 100*(TelemBuffer[l_byteIndex-3]<<8 | TelemBuffer[l_byteIndex-2])/MOTOR_POLES_DIV_2);
-            Serial.printf("LEFT CRC=%.2X\n",TelemBuffer[l_byteIndex-1]);
-            Serial.printf("LEFT New CRC=%.2X\n",telem_getCRC(&(TelemBuffer[l_byteIndex-10]), 9));
-            Serial.printf("l-temp %d\n", TelemBuffer[l_byteIndex - 10]);
-            Serial.printf("l-volt %3.2f\n", 1.0 * (TelemBuffer[l_byteIndex - 9] << 8 | TelemBuffer[l_byteIndex - 8]) / 100);
-            Serial.printf("l-amps %3.2f\n", 1.0 * (TelemBuffer[l_byteIndex - 7] << 8 | TelemBuffer[l_byteIndex - 6]) / 100);
+            Serial.printf("Consump=%d mAh\t", (TelemBuffer[l_byteIndex-5]<<8 | TelemBuffer[l_byteIndex-4]));
+            Serial.printf("eRPM=%d\t", 100*(TelemBuffer[l_byteIndex-3]<<8 | TelemBuffer[l_byteIndex-2]));
+            Serial.printf("RPM=%d\t", 100*(TelemBuffer[l_byteIndex-3]<<8 | TelemBuffer[l_byteIndex-2])/MOTOR_POLES_DIV_2);
+            Serial.printf("temp %d\t", TelemBuffer[l_byteIndex - 10]);
+            Serial.printf("volt %3.2f\t", 1.0 * (TelemBuffer[l_byteIndex - 9] << 8 | TelemBuffer[l_byteIndex - 8]) / 100);
+            Serial.printf("amps %3.2f\n", 1.0 * (TelemBuffer[l_byteIndex - 7] << 8 | TelemBuffer[l_byteIndex - 6]) / 100);
             l_byteIndex = 0;
         }
     }

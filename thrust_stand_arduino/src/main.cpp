@@ -33,7 +33,7 @@ void setup()
         Serial.print("Calibration factor: "); Serial.println(forceBalance.getCalibrationFactor());
     }
     if (esc_present){
-        setup_esc();
+        esc_setup();
     }
 }
 
@@ -44,7 +44,7 @@ void loop()
     Serial.print(current_time);
 
     if (esc_present){
-        loop_esc();
+        esc_loop();
         Serial.println();
     }
     
