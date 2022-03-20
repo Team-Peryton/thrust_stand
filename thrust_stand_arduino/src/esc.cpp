@@ -1,28 +1,37 @@
 #include <Arduino.h>
-#define MOTOR_POLES_DIV_2 14
+#define SERIAL Serial2
 
-int r_byteIndex = 0;
-int l_byteIndex = 0;
-uint32_t tmp_m;
-byte TelemBuffer[100];
-uint8_t CRCTable[256];
+class BlheliEsc {
+    private:
+        int r_byteIndex = 0;
+        int l_byteIndex = 0;
+        uint32_t tmp_m;
+        byte TelemBuffer[100];
+        uint8_t CRCTable[256];
+        int num_motor_poles;
+    
+    public:
+        int consumption = -1;
+        int eRPM = -1;
+        int RPM = -1;
+        int temperature = -1;
+        float voltage = -1;
+        float current = -1;
+        
+        BlheliEsc(int motor_poles);
+        uint8_t telem_getCRC(uint8_t message[], uint32_t length);
+        void telem_buildCRCTable();
+        uint8_t getCRCForByte(uint8_t val);
+        void update();
+};
 
-
-uint8_t getCRCForByte(uint8_t val)
-{
-    uint32_t j;
-    for (j = 0; j < 8; j++)
-        val = (val & 0x80) ? 0x7 ^ (val << 1) : (val << 1);
-    return val;
+BlheliEsc::BlheliEsc(int motor_poles){
+    telem_buildCRCTable();
+    SERIAL.begin(115200, SERIAL_8N1);
+    num_motor_poles = motor_poles;
 }
-void telem_buildCRCTable()
-{
-    uint32_t i;
-    // fill an array with CRC values of all 256 possible bytes
-    for (i = 0; i < 256; i++)
-        CRCTable[i] = getCRCForByte(i);
-}
-uint8_t telem_getCRC(uint8_t message[], uint32_t length)
+
+uint8_t BlheliEsc::telem_getCRC(uint8_t message[], uint32_t length)
 {
     uint32_t i;
     uint32_t crc = 0;
@@ -31,16 +40,27 @@ uint8_t telem_getCRC(uint8_t message[], uint32_t length)
     return crc;
 }
 
-void esc_setup(){
-    telem_buildCRCTable();
-    Serial2.begin(115200, SERIAL_8N1);
-    Serial.println("Hello!");
+void BlheliEsc::telem_buildCRCTable()
+{
+    uint32_t i;
+    // fill an array with CRC values of all 256 possible bytes
+    for (i = 0; i < 256; i++)
+        CRCTable[i] = getCRCForByte(i);
 }
 
-void esc_loop(){
-    while (Serial2.available() > 0)
+uint8_t BlheliEsc::getCRCForByte(uint8_t val)
+{
+    uint32_t j;
+    for (j = 0; j < 8; j++)
+        val = (val & 0x80) ? 0x7 ^ (val << 1) : (val << 1);
+    return val;
+}
+
+void BlheliEsc::update()
+{
+    while (SERIAL.available() > 0)
     {
-        TelemBuffer[(l_byteIndex & 31)] = Serial2.read();
+        TelemBuffer[(l_byteIndex & 31)] = SERIAL.read();
         l_byteIndex++;
     }
     if (l_byteIndex >= 10)
@@ -48,12 +68,12 @@ void esc_loop(){
         if (TelemBuffer[l_byteIndex - 1] == telem_getCRC(&(TelemBuffer[l_byteIndex - 10]), 9))
         {
             tmp_m = micros();
-            Serial.printf("Consump=%d mAh\t", (TelemBuffer[l_byteIndex-5]<<8 | TelemBuffer[l_byteIndex-4]));
-            Serial.printf("eRPM=%d\t", 100*(TelemBuffer[l_byteIndex-3]<<8 | TelemBuffer[l_byteIndex-2]));
-            Serial.printf("RPM=%d\t", 100*(TelemBuffer[l_byteIndex-3]<<8 | TelemBuffer[l_byteIndex-2])/MOTOR_POLES_DIV_2);
-            Serial.printf("temp %d\t", TelemBuffer[l_byteIndex - 10]);
-            Serial.printf("volt %3.2f\t", 1.0 * (TelemBuffer[l_byteIndex - 9] << 8 | TelemBuffer[l_byteIndex - 8]) / 100);
-            Serial.printf("amps %3.2f\n", 1.0 * (TelemBuffer[l_byteIndex - 7] << 8 | TelemBuffer[l_byteIndex - 6]) / 100);
+            consumption = TelemBuffer[l_byteIndex-5]<<8 | TelemBuffer[l_byteIndex-4];
+            eRPM = 100*(TelemBuffer[l_byteIndex-3]<<8 | TelemBuffer[l_byteIndex-2]);
+            RPM = 100*((TelemBuffer[l_byteIndex-3]<<8 | TelemBuffer[l_byteIndex-2])/num_motor_poles);
+            temperature = TelemBuffer[l_byteIndex - 10];
+            voltage = 1.0 * (TelemBuffer[l_byteIndex - 9] << 8 | TelemBuffer[l_byteIndex - 8]) / 100;
+            current = 1.0 * (TelemBuffer[l_byteIndex - 7] << 8 | TelemBuffer[l_byteIndex - 6]) / 100;
             l_byteIndex = 0;
         }
     }

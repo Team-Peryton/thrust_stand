@@ -1,31 +1,33 @@
 // modified from https://github.com/sparkfun/SparkFun_Qwiic_Scale_NAU7802_Arduino_Library/blob/master/examples/Example2_CompleteScale/Example2_CompleteScale.ino
-
+#include "balance.h"
+#include "esc.h"
 #include <Wire.h>
 #include <EEPROM.h>
 #include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h" 
-#include "balance.h"
-#include "esc.h"
 
 NAU7802 forceBalance; //Create instance of the NAU7802 class
 unsigned long allTime = 0;
 unsigned long current_time;
 bool calibrate = false;
 bool settingsDetected = false;
-const bool scale_present = false;
-const bool esc_present = true;
+const bool scale_present = true;
+const bool esc_present = false;
 
 void setup()
 {
     Serial.begin(57600);
 
-    if (scale_present) {
+    if (scale_present){
         Wire.begin();
-        Wire.setClock(400000);
+        Wire.setClock(400000); //Qwiic Scale is capable of running at 400kHz if desired
 
         if (forceBalance.begin() == false)
-            Serial.println("Scale not detected. Please check wiring. Freezing..."); while (1);
-    
+        {
+            Serial.println("Scale not detected. Please check wiring. Freezing...");
+            while (1);
+        }
         Serial.println("Scale detected!");
+    
         readSystemSettings(forceBalance, settingsDetected); //Load zeroOffset and calibrationFactor from EEPROM
         forceBalance.setSampleRate(NAU7802_SPS_320); //Increase to max sample rate
         forceBalance.calibrateAFE(); //Re-cal analog front end when we change gain, sample rate, or channel 
