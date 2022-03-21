@@ -1,7 +1,10 @@
 #include <Arduino.h>
-#define SERIAL Serial2
+#define ESCSERIAL Serial2
 
-class BlheliEsc {
+/**
+ * Get telemetry from a Blheli ESC over the telemetry line
+ */
+class BlheliEscTelemetry {
     private:
         int r_byteIndex = 0;
         int l_byteIndex = 0;
@@ -18,20 +21,26 @@ class BlheliEsc {
         float voltage = -1;
         float current = -1;
         
-        BlheliEsc(int motor_poles);
+        BlheliEscTelemetry(int motor_poles);
         uint8_t telem_getCRC(uint8_t message[], uint32_t length);
         void telem_buildCRCTable();
         uint8_t getCRCForByte(uint8_t val);
         void update();
 };
 
-BlheliEsc::BlheliEsc(int motor_poles){
+/**
+ * Constructor, generates CRC table and begins serial connection
+ */
+BlheliEscTelemetry::BlheliEscTelemetry(int motor_poles){
     telem_buildCRCTable();
-    SERIAL.begin(115200, SERIAL_8N1);
+    ESCSERIAL.begin(115200, SERIAL_8N1);
     num_motor_poles = motor_poles;
 }
 
-uint8_t BlheliEsc::telem_getCRC(uint8_t message[], uint32_t length)
+/**
+ * check integrity of telemetry packet
+ */
+uint8_t BlheliEscTelemetry::telem_getCRC(uint8_t message[], uint32_t length)
 {
     uint32_t i;
     uint32_t crc = 0;
@@ -40,7 +49,10 @@ uint8_t BlheliEsc::telem_getCRC(uint8_t message[], uint32_t length)
     return crc;
 }
 
-void BlheliEsc::telem_buildCRCTable()
+/**
+ * 
+ */
+void BlheliEscTelemetry::telem_buildCRCTable()
 {
     uint32_t i;
     // fill an array with CRC values of all 256 possible bytes
@@ -48,7 +60,10 @@ void BlheliEsc::telem_buildCRCTable()
         CRCTable[i] = getCRCForByte(i);
 }
 
-uint8_t BlheliEsc::getCRCForByte(uint8_t val)
+/**
+ * 
+ */
+uint8_t BlheliEscTelemetry::getCRCForByte(uint8_t val)
 {
     uint32_t j;
     for (j = 0; j < 8; j++)
@@ -56,11 +71,14 @@ uint8_t BlheliEsc::getCRCForByte(uint8_t val)
     return val;
 }
 
-void BlheliEsc::update()
+/**
+ * check the serial connection and store new values 
+ */
+void BlheliEscTelemetry::update()
 {
-    while (SERIAL.available() > 0)
+    while (ESCSERIAL.available() > 0)
     {
-        TelemBuffer[(l_byteIndex & 31)] = SERIAL.read();
+        TelemBuffer[(l_byteIndex & 31)] = ESCSERIAL.read();
         l_byteIndex++;
     }
     if (l_byteIndex >= 10)

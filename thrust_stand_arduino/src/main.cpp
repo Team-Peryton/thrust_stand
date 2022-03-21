@@ -5,7 +5,8 @@
 #include <EEPROM.h>
 #include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h" 
 
-NAU7802 forceBalance; //Create instance of the NAU7802 class
+NAU7802 forceBalance;
+BlheliEscTelemetry Esc;
 unsigned long allTime = 0;
 unsigned long current_time;
 bool calibrate = false;
@@ -35,7 +36,7 @@ void setup()
         Serial.print("Calibration factor: "); Serial.println(forceBalance.getCalibrationFactor());
     }
     if (esc_present){
-        esc_setup();
+        Esc = BlheliEscTelemetry(7);
     }
 }
 
@@ -46,7 +47,7 @@ void loop()
     Serial.print(current_time);
 
     if (esc_present){
-        esc_loop();
+        Esc.update();
         Serial.println();
     }
     
