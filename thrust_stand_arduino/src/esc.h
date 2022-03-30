@@ -20,6 +20,7 @@ class BlheliEscTelemetry {
         float voltage = -1;
         float current = -1;
         
+        BlheliEscTelemetry();
         BlheliEscTelemetry(int motor_poles);
         uint8_t telem_getCRC(uint8_t message[], uint32_t length);
         void telem_buildCRCTable();
